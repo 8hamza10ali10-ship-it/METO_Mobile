@@ -131,18 +131,47 @@
       chat.scrollTop = chat.scrollHeight;
     }
 
-    function sendMessage() {
-      const text = input.value.trim();
+    let waiting = false;
 
-      if (!text) return;
+async function sendMessage() {
+  const text = input.value.trim();
 
-      addMessage(text, "user");
-      input.value = "";
+  if (!text || waiting) return;
 
-      addMessage(
-        "أنا جاهز! لسه بنوصل عقل METO السحابي.",
-        "bot"
-      );
+  waiting = true;
+  input.disabled = true;
+
+  addMessage(text, "user");
+  input.value = "";
+
+  try {
+    const response = await fetch(
+      "https://meto-api.8hamza10ali10.workers.dev/",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ message: text })
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "فشل الاتصال");
+    }
+
+    addMessage(data.reply, "bot");
+
+  } catch (error) {
+    addMessage("حصل خطأ: " + error.message, "bot");
+  } finally {
+    waiting = false;
+    input.disabled = false;
+    input.focus();
+  }
+}
     }
 
     input.addEventListener("keydown", function(event) {
